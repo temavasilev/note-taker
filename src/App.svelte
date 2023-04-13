@@ -4,6 +4,19 @@
   import NotesList from './NotesList.svelte';
   import { v4 as uuid } from 'uuid';
 
+  import { derived } from 'svelte/store';
+
+
+  type NoteType = {
+    id: string;
+    content: string;
+    tags: string[];
+    category: string;
+  };
+
+  let filterQuery: string = '';
+  let sortBy: string = 'date-desc';
+
   // Variable to hold the new note content
   let newNoteContent: string = '';
   let newNoteTags: string = '';
@@ -33,13 +46,42 @@
     newNoteCategory = '';
   }
 }
+
+const sortedFilteredNotes = derived(notes, ($notes: NoteType[]) => {
+  let filteredNotes: NoteType[] = $notes;
+
+  if (filterQuery) {
+    const lowerCaseFilter = filterQuery.toLowerCase();
+    filteredNotes = $notes.filter(
+      (note: NoteType) =>
+        note.content.toLowerCase().includes(lowerCaseFilter) ||
+        note.tags.some((tag: string) => tag.toLowerCase().includes(lowerCaseFilter)) ||
+        note.category.toLowerCase().includes(lowerCaseFilter)
+    );
+  }
+
+  switch (sortBy) {
+    case 'date-asc':
+      return filteredNotes.sort((a: NoteType, b: NoteType) => a.id.localeCompare(b.id));
+    case 'date-desc':
+      return filteredNotes.sort((a: NoteType, b: NoteType) => b.id.localeCompare(a.id));
+    case 'category':
+      return filteredNotes.sort((a: NoteType, b: NoteType) => a.category.localeCompare(b.category));
+    default:
+      return filteredNotes;
+  }
+});
 </script>
 
 <!-- Main app layout -->
 <main>
   <h1>Note-Taking App</h1>
   <div class="app-container">
-    <NotesList notes={$notes} />
+    <NotesList
+      bind:notes={$sortedFilteredNotes}
+      on:removeNote={(event) =>
+        ($notes = $notes.filter((n) => n.id !== event.detail.id))}
+    />
     <div class="note-editor">
       <textarea bind:value={newNoteContent} placeholder="Enter note content"></textarea>
       <input
@@ -53,6 +95,18 @@
         bind:value={newNoteCategory}
       />
       <button on:click={addNote}>Add Note</button>
+    </div>
+    <div class="controls">
+      <input
+        type="text"
+        placeholder="Filter notes"
+        bind:value={filterQuery}
+      />
+      <select bind:value={sortBy}>
+        <option value="date-desc">Date (Newest)</option>
+        <option value="date-asc">Date (Oldest)</option>
+        <option value="category">Category</option>
+      </select>
     </div>
     </div>
 </main>
