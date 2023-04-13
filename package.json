@@ -19,6 +19,8 @@
     "vite": "^4.2.0"
   },
   "dependencies": {
-    "markdown-it": "^13.0.1"
+    "@types/uuid": "^9.0.1",
+    "markdown-it": "^13.0.1",
+    "uuid": "^9.0.0"
   }
 }

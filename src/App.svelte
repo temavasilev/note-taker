@@ -2,20 +2,35 @@
 <script lang="ts">
   import { writable } from 'svelte/store';
   import NotesList from './NotesList.svelte';
+  import { v4 as uuid } from 'uuid';
 
   // Variable to hold the new note content
   let newNoteContent: string = '';
+  let newNoteTags: string = '';
+  let newNoteCategory: string = '';
 
   // Create a writable store to hold the list of notes
-  const notes = writable<{ id: string; content: string }[]>([]);
+  const notes = writable([]);
 
   // Function to add a new note to the notes store
   function addNote() {
-  if (newNoteContent.trim() !== '') {
-    notes.update((currentNotes) => {
-      return [...currentNotes, { id: Date.now().toString(), content: newNoteContent }];
-    });
+  if (newNoteContent) {
+    const tagsArray = newNoteTags
+      ? newNoteTags.split(',').map((tag) => tag.trim())
+      : [];
+
+    $notes = [
+      ...$notes,
+      {
+        id: uuid(),
+        content: newNoteContent,
+        tags: tagsArray, // use parsed tags array
+        category: newNoteCategory, // include category
+      },
+    ];
     newNoteContent = '';
+    newNoteTags = '';
+    newNoteCategory = '';
   }
 }
 </script>
@@ -26,14 +41,20 @@
   <div class="app-container">
     <NotesList notes={$notes} />
     <div class="note-editor">
-      <textarea
-        bind:value={newNoteContent}
-        placeholder="Type your note here..."
-        on:keydown={(event) => event.key === 'Enter' && addNote()}
-      ></textarea>
+      <textarea bind:value={newNoteContent} placeholder="Enter note content"></textarea>
+      <input
+        type="text"
+        placeholder="Enter comma-separated tags"
+        bind:value={newNoteTags}
+      />
+      <input
+        type="text"
+        placeholder="Enter a category"
+        bind:value={newNoteCategory}
+      />
       <button on:click={addNote}>Add Note</button>
     </div>
-  </div>
+    </div>
 </main>
 
 <style>

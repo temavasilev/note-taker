@@ -17,8 +17,11 @@
   <!-- Display the list of notes using the Note component -->  
   <div class="notes-list">
     <div class="notes-container">
-      {#each notes as note (note.id)}
-        <Note {...note} on:removeNote={(event) => (notes = notes.filter((n) => n.id !== event.detail.id))} />
+        {#each notes as note (note.id)}
+        <Note
+          {...note}
+          on:removeNote={(event) => (notes = notes.filter((n) => n.id !== event.detail.id))}
+        />
       {/each}
     </div>
   </div>
