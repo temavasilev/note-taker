@@ -1,6 +1,7 @@
 <!-- Import createEventDispatcher to handle custom events -->
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import MarkdownIt from 'markdown-it';
   
     // Exported props for this component
     export let id: string;
@@ -13,11 +14,18 @@
     function removeNote() {
       dispatch('removeNote', { id });
     }
+
+    const md = new MarkdownIt();
+
+    function parseMarkdown(content: string) {
+      return md.render(content);
+    }
+
   </script>
   
   <!-- Display the note content and a remove button -->
   <div class="note">
-    <p>{content}</p>
-    <button on:click={removeNote}>Remove</button>
+    <div class="note-content">{@html parseMarkdown(content)}</div>
+    <button on:click={removeNote}>X</button>
   </div>
   
