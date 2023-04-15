@@ -4,6 +4,7 @@
     import MarkdownIt from 'markdown-it';
   
     export let id: string;
+    export let title: string;
     export let content: string;
     export let tags: string[];
     export let category: string;
@@ -23,6 +24,7 @@
   
   <!-- Display the note content and a remove button -->
   <div class="note">
+    <h3 class="note-title">{title}</h3>
     <div class="note-content">{@html parseMarkdown(content)}</div>
     <div class="note-tags">
       {#each tags as tag}
@@ -42,6 +44,11 @@
   border: 1px solid #d5c4a1;
   margin-bottom: 1rem;
   position: relative;
+}
+
+.note-title {
+  margin: 0;
+  margin-bottom: 0.5rem;
 }
 
 .note button {

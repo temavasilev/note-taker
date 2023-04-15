@@ -2,77 +2,92 @@
   import { writable, derived } from 'svelte/store';
   import NotesList from './NotesList.svelte';
   import { v4 as uuid } from 'uuid';
-  import Note from './Note.svelte';
 
   type NoteType = {
     id: string;
+    title: string;
     content: string;
     tags: string[];
     category: string;
+    notebook: string;
   };
 
   let filterQuery: string = '';
   let sortBy: string = 'date-desc';
 
+  let newNoteTitle: string = '';
   let newNoteContent: string = '';
   let newNoteTags: string = '';
   let newNoteCategory: string = '';
 
-// Load notes from local storage or initialize an empty array if not found
-const storedNotes = localStorage.getItem('notes');
-const notes = writable(storedNotes ? JSON.parse(storedNotes) : []);
+  let newNotebookName: string = '';
+  let selectedNotebook: string = '';
 
+  const notes = writable([]);
+  const notebooks = writable([]);
 
-function addNote() {
-  if (newNoteContent) {
-    const tagsArray = newNoteTags
-      ? newNoteTags.split(',').map((tag) => tag.trim())
-      : [];
+  function addNote() {
+    if (newNoteTitle && newNoteContent && selectedNotebook) {
+      const tagsArray = newNoteTags
+        ? newNoteTags.split(',').map((tag) => tag.trim())
+        : [];
 
-    $notes = [
-      ...$notes,
-      {
-        id: uuid(),
-        content: newNoteContent,
-        tags: tagsArray,
-        category: newNoteCategory,
-      },
-    ];
-
-    // Save notes to local storage
-    localStorage.setItem('notes', JSON.stringify($notes));
-
-    newNoteContent = '';
-    newNoteTags = '';
-    newNoteCategory = '';
+      $notes = [
+        ...$notes,
+        {
+          id: uuid(),
+          title: newNoteTitle,
+          content: newNoteContent,
+          tags: tagsArray,
+          category: newNoteCategory,
+          notebook: selectedNotebook,
+        },
+      ];
+      newNoteTitle = '';
+      newNoteContent = '';
+      newNoteTags = '';
+      newNoteCategory = '';
+    }
   }
-}
 
-  function removeNoteById(id: string) {
-    $notes = $notes.filter((n: NoteType) => n.id !== id);
-    localStorage.setItem('notes', JSON.stringify($notes));
+  function addNotebook() {
+    if (newNotebookName) {
+      $notebooks = [...$notebooks, newNotebookName];
+      selectedNotebook = newNotebookName;
+      newNotebookName = '';
+    }
   }
 
   const sortedFilteredNotes = derived(notes, ($notes: NoteType[]) => {
-    let filteredNotes: NoteType[] = $notes;
+    let filteredNotes: NoteType[] = $notes.filter(
+      (note: NoteType) => note.notebook === selectedNotebook
+    );
 
     if (filterQuery) {
       const lowerCaseFilter = filterQuery.toLowerCase();
-      filteredNotes = $notes.filter(
+      filteredNotes = filteredNotes.filter(
         (note: NoteType) =>
           note.content.toLowerCase().includes(lowerCaseFilter) ||
-          note.tags.some((tag: string) => tag.toLowerCase().includes(lowerCaseFilter)) ||
+          note.tags.some((tag: string) =>
+            tag.toLowerCase().includes(lowerCaseFilter)
+          ) ||
           note.category.toLowerCase().includes(lowerCaseFilter)
       );
     }
 
     switch (sortBy) {
       case 'date-asc':
-        return filteredNotes.sort((a: NoteType, b: NoteType) => a.id.localeCompare(b.id));
+        return filteredNotes.sort((a: NoteType, b: NoteType) =>
+          a.id.localeCompare(b.id)
+        );
       case 'date-desc':
-        return filteredNotes.sort((a: NoteType, b: NoteType) => b.id.localeCompare(a.id));
+        return filteredNotes.sort((a: NoteType, b: NoteType) =>
+          b.id.localeCompare(a.id)
+        );
       case 'category':
-        return filteredNotes.sort((a: NoteType, b: NoteType) => a.category.localeCompare(b.category));
+        return filteredNotes.sort((a: NoteType, b: NoteType) =>
+          a.category.localeCompare(b.category)
+        );
       default:
         return filteredNotes;
     }
@@ -81,13 +96,19 @@ function addNote() {
 
 <!-- Main app layout -->
 <main>
+  <h1>Note-Taking App</h1>
   <div class="app-container">
-    <NotesList
-    bind:notes={$sortedFilteredNotes}
-    {removeNoteById}
-  />
+    <NotesList bind:notes={$sortedFilteredNotes} />
     <div class="note-editor">
-      <textarea bind:value={newNoteContent} placeholder="Enter note content"></textarea>
+      <input
+        type="text"
+        placeholder="Enter note title"
+        bind:value={newNoteTitle}
+      />
+      <textarea
+        bind:value={newNoteContent}
+        placeholder="Enter note content"
+      ></textarea>
       <input
         type="text"
         placeholder="Enter comma-separated tags"
@@ -97,25 +118,37 @@ function addNote() {
         type="text"
         placeholder="Enter a category"
         bind:value={newNoteCategory}
-      />
-      <button on:click={addNote}>Add Note</button>
+        />
+        <button on:click={addNote}>Add Note</button>
+      </div>
+      <div class="controls">
+        <input
+          type="text"
+          placeholder="Filter notes"
+          bind:value={filterQuery}
+        />
+        <select bind:value={sortBy}>
+          <option value="date-desc">Date (Newest)</option>
+          <option value="date-asc">Date (Oldest)</option>
+          <option value="category">Category</option>
+        </select>
+        <div class="notebook-controls">
+          <select bind:value={selectedNotebook}>
+            <option value="" disabled>Select a notebook</option>
+            {#each $notebooks as notebook}
+              <option value={notebook}>{notebook}</option>
+            {/each}
+          </select>
+          <input
+            type="text"
+            placeholder="New notebook name"
+            bind:value={newNotebookName}
+          />
+          <button on:click={addNotebook}>Add Notebook</button>
+        </div>
+      </div>
     </div>
-    <div class="controls">
-      <input
-        type="text"
-        placeholder="Filter notes"
-        bind:value={filterQuery}
-      />
-      <select bind:value={sortBy}>
-        <option value="date-desc">Date (Newest)</option>
-        <option value="date-asc">Date (Oldest)</option>
-        <option value="category">Category</option>
-      </select>
-    </div>
-  </div>
-</main>
-
-<!-- Add the existing styles here -->
+  </main>
 
 <style>
 body {
@@ -171,8 +204,9 @@ h1 {
 }
 
 .note-editor textarea {
-  flex: 1 0 auto;
   resize: none;
+  width: 70%;
+  flex: 1 0 auto;
   border: 1px solid #d5c4a1;
   padding: 1rem;
   font-size: 1rem;
