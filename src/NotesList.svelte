@@ -1,7 +1,7 @@
 <script lang="ts">
     import Note from './Note.svelte';
   
-    export let notes: { id: string; content: string; tags: string[]; category: string }[];
+    export let notes: { id: string; title: string; content: string; tags: string[]; category: string; notebook: string }[];
 
     export let removeNoteById: (id: string) => void;
   </script>
@@ -10,7 +10,8 @@
   <div class="notes-list">
     <div class="notes-container">
       {#each notes as note (note.id)}
-        <Note {...note}
+        <Note 
+        {...note}
         on:removeNote={() => removeNoteById(note.id)}
         />
       {/each}

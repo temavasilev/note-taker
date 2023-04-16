@@ -50,6 +50,10 @@
     }
   }
 
+  function removeNoteById(id: string) {
+    $notes = $notes.filter((note) => note.id !== id);
+  }
+
   function addNotebook() {
     if (newNotebookName) {
       $notebooks = [...$notebooks, newNotebookName];
@@ -98,7 +102,9 @@
 <main>
   <h1>Note-Taking App</h1>
   <div class="app-container">
-    <NotesList bind:notes={$sortedFilteredNotes} />
+    <NotesList 
+      bind:notes={$sortedFilteredNotes}
+      {removeNoteById} />
     <div class="note-editor">
       <input
         type="text"
